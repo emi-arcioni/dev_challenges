@@ -1,11 +1,18 @@
 <?php
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Slim\Interfaces\RouteCollectorProxyInterface as Group;
+
+use App\Controllers\IssueController;
 
 return function (Slim\App $app) {
-    $app->get('/issue/{number}', function (Request $request, Response $response, array $args) {
-        $number = $args['number'];
-        $response->getBody()->write(json_encode(['issue' => $number]));
-        return $response->withHeader('Content-Type', 'application/json');
+    $app->get('/', function (Request $request, Response $response) {
+        $response->getBody()->write('API is working');
+        return $response;
+    });
+
+    $app->group('/issue', function (Group $group) {
+        $group->get('/{id}', IssueController::class . ':get');
+        $group->post('/{id}/join', IssueController::class . ':join');
     });
 };
