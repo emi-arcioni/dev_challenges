@@ -11,6 +11,19 @@ use Slim\Exception\HttpNotFoundException;
 
 class IssueController extends Controller
 {   
+    public function index(Request $request, Response $resp, array $args)
+    {
+        $keys = $this->db->redis->keys('*');
+        sort($keys);
+
+        $response = [];
+        foreach($keys as $id) {
+            $response[] = $this->get($request, $resp, ['id' => $id, 'raw' => true]);
+        }
+
+        return $this->response($response, $resp);
+    }
+
     public function get(Request $request, Response $resp, array $args)
     {
         $id = $args['id'];
@@ -28,6 +41,7 @@ class IssueController extends Controller
                 }, json_decode($data['members'], true));
 
                 $response = [
+                    'id' => (int)$id,
                     'status' => $data['status'],
                     'members' => $members
                 ];
@@ -35,6 +49,7 @@ class IssueController extends Controller
                 $members = json_decode($data['members'], true);
 
                 $response = [
+                    'id' => (int)$id,
                     'status' => $data['status'],
                     'members' => $members,
                     'avg' => $this->average(array_filter(array_map(function($member) {
@@ -46,7 +61,11 @@ class IssueController extends Controller
             throw new HttpNotFoundException($request, 'Issue not found');
         }
 
-        return $this->response($response, $resp);
+        if (empty($args['raw'])) {
+            return $this->response($response, $resp);
+        } else {
+            return $response;
+        }
     }
 
     public function join(Request $request, Response $resp, array $args)

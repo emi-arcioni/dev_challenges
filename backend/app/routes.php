@@ -11,7 +11,8 @@ return function (Slim\App $app) {
         return $response;
     });
 
-    $app->group('/issue', function (Group $group) {
+    $app->group('/issues', function (Group $group) {
+        $group->get('', IssueController::class . ':index');
         $group->get('/{id}', IssueController::class . ':get');
         $group->post('/{id}/join', IssueController::class . ':join');
         $group->post('/{id}/vote', IssueController::class . ':vote');
