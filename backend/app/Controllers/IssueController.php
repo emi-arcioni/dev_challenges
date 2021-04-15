@@ -110,7 +110,7 @@ class IssueController extends Controller
         }
         $this->db->redis->hmset($id, ['status' => 'voting', 'members' => json_encode($members)]);
 
-        return $this->response(['message' => $member['name'] . ' joined the issue #' . $id . ' succesfully'], $resp);
+        return $this->response(['message' => $member['name'] . ' joined the issue #' . $id . ' successfully'], $resp);
     }
 
     public function vote(Request $request, Response $resp, array $args)
