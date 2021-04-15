@@ -11,6 +11,7 @@ use Slim\Exception\HttpNotFoundException;
 use Slim\Exception\HttpNotImplementedException;
 use Slim\Exception\HttpUnauthorizedException;
 use Slim\Handlers\ErrorHandler;
+use Slim\Routing\RouteContext;
 use Exception;
 use Throwable;
 
@@ -68,7 +69,11 @@ class HttpErrorHandler extends ErrorHandler
         
         $payload = json_encode($error, JSON_PRETTY_PRINT);
         
-        $response = $this->responseFactory->createResponse($statusCode);        
+        $response = $this->responseFactory->createResponse($statusCode);      
+        
+        // workaround for the use case when there's a request to an unknown endpoint and want the client don't get the CORS error
+        $response = $response->withHeader('Access-Control-Allow-Origin', '*');
+        
         $response->getBody()->write($payload);
         
         return $response->withHeader('Content-Type', 'application/json');

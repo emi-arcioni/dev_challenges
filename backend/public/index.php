@@ -11,6 +11,12 @@ require __DIR__ . '/../vendor/autoload.php';
 $container = new Container();
 $app = AppFactory::createFromContainer($container);
 
+$middleware = require __DIR__ . '/../app/middleware.php';
+$middleware($app);
+
+$routes = require __DIR__ . '/../app/routes.php';
+$routes($app);
+
 $callableResolver = $app->getCallableResolver();
 $responseFactory = $app->getResponseFactory();
 
@@ -22,12 +28,6 @@ $app->addRoutingMiddleware();
 // Add Error Handling Middleware
 $errorMiddleware = $app->addErrorMiddleware(true, false, false);
 $errorMiddleware->setDefaultErrorHandler($errorHandler);
-
-$middleware = require __DIR__ . '/../app/middleware.php';
-$middleware($app);
-
-$routes = require __DIR__ . '/../app/routes.php';
-$routes($app);
 
 $app->run();
 
