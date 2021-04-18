@@ -1,0 +1,93 @@
+<template>
+    <div class="row">
+        <div class="col-6 offset-3">
+            <div class="alert alert-danger mt-4" v-if="errors.length">
+                <strong>Please fix the following error(s)</strong>
+                <ul class="mb-0">
+                    <li v-for="error in errors" :key="error">{{ error }}</li>
+                </ul>
+            </div>
+            <form id="app" @submit="checkForm">
+                <div class="form-group">
+                    <label for="input1">Your name</label>
+                    <input type="text" class="form-control" id="input1" name="name" v-model="name">
+                    <small class="form-text text-muted">Please enter your name in order to identify yourself in the planning poker</small>
+                </div>
+                <div class="form-group">
+                    <label for="input2">Select an issue</label>
+                    <select name="issue_id" id="input2" class="form-control" v-model="issue_id">
+                        <option v-bind:value="null">Select...</option>
+                        <option v-bind:value="'new'">New</option>
+                        <option v-for="issue in issues" :key="issue.id" v-bind:value="issue.id">{{ issue.id }}</option>
+                    </select>
+                </div>
+                <div class="form-group" v-if="issue_id == 'new'">
+                    <input type="number" class="form-control" name="new_issue" v-model="new_issue">
+                </div>
+                <button type="submit" class="btn btn-primary">Confirm</button>
+            </form>
+        </div>
+    </div>
+</template>
+
+<script>
+import router from '../router';
+
+export default {
+    name: 'Home',
+    data() {
+        return {
+            issues: [],
+            errors: [],
+            name: null,
+            issue_id: null,
+            new_issue: null
+        }
+    },
+    async mounted() {
+        this.getIssues();
+    },
+    methods: {
+        async getIssues() {
+            // TODO: transform API url into a environment variable
+            const resPhp = await fetch('http://localhost:8081/issues');
+            const data = await resPhp.json();
+            this.issues = data;
+        },
+        async checkForm(e) {
+            e.preventDefault();
+            this.errors = [];
+            if (!this.name) {
+                this.errors.push('Your name is mandatory');
+            }
+            if (!this.issue_id) {
+                this.errors.push('The issue is mandatory');
+            } else if (this.issue_id == 'new' && !this.new_issue) {
+                this.errors.push('The new issue is mandatory');
+            }
+
+            if (!this.errors.length) { 
+                let issue_id;
+                if (this.issue_id == 'new') {
+                    issue_id = this.new_issue;
+                } else {
+                    issue_id = this.issue_id;
+                }               
+                const requestOptions = {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: this.name })
+                };
+                // TODO: transform API url into a environment variable
+                const resp = await fetch('http://localhost:8081/issues/' + issue_id + '/join', requestOptions);
+                if (resp.status == 200) {
+                    router.push('voting/' + issue_id + '/' + this.name);
+                } else {
+                    const data = await resp.json();
+                    this.errors.push(data.error.description);
+                }
+            }
+        }
+    }
+}
+</script>
