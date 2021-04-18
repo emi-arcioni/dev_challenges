@@ -19,9 +19,9 @@
           <ul class="list-group mb-3">
             <li class="list-group-item" :key="member.name" v-for="member in members">
               {{member.name}} {{ member.name == member_name ? '(you)':  '' }}
+              status: {{member.status}}
               {{member.status == 'voted' || member.status == 'passed' ? ' ✅' : ''}}
               {{member.value ? ' - ' + member.value : ''}}
-              {{member.status == 'passed' ? ' - passed' : ''}}
             </li>
             <li v-if="issue && issue.status == 'reveal'" class="list-group-item active">
               Average: {{ issue.avg }}
