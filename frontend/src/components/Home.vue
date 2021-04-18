@@ -49,8 +49,7 @@ export default {
     },
     methods: {
         async getIssues() {
-            // TODO: transform API url into a environment variable
-            const resPhp = await fetch('http://localhost:8081/issues');
+            const resPhp = await fetch(process.env.VUE_APP_API_URL + '/issues');
             const data = await resPhp.json();
             this.issues = data;
         },
@@ -78,8 +77,7 @@ export default {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ name: this.name })
                 };
-                // TODO: transform API url into a environment variable
-                const resp = await fetch('http://localhost:8081/issues/' + issue_id + '/join', requestOptions);
+                const resp = await fetch(process.env.VUE_APP_API_URL + '/issues/' + issue_id + '/join', requestOptions);
                 if (resp.status == 200) {
                     router.push('voting/' + issue_id + '/' + this.name);
                 } else {

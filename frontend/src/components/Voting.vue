@@ -19,8 +19,9 @@
           <ul class="list-group">
             <li class="list-group-item" :key="member.name" v-for="member in members">
               {{member.name}} {{ member.name == member_name ? '(you)':  '' }}
-              {{member.status == 'voted' ? ' ✅' : ''}}
+              {{member.status == 'voted' || member.status == 'passed' ? ' ✅' : ''}}
               {{member.value ? ' - ' + member.value : ''}}
+              {{member.status == 'passed' ? ' - passed' : ''}}
             </li>
             <li v-if="issue && issue.status == 'reveal'" class="list-group-item active">
               Average: {{ issue.avg }}
@@ -73,13 +74,12 @@ export default {
             value: vote
           })
       };
-      // TODO: transform API url into a environment variable
-      await fetch('http://localhost:8081/issues/' + this.issue_id + '/vote', requestOptions);
+      await fetch(process.env.VUE_APP_API_URL + '/issues/' + this.issue_id + '/vote', requestOptions);
       this.getIssue();
     },
     async getIssue() {
-      // TODO: transform API url into a environment variable
-      const response = await fetch('http://localhost:8081/issues/' + this.issue_id);
+      const response = await fetch(process.env.VUE_APP_API_URL + '/issues/' + this.issue_id);
+      if (response.status == 404) router.push('/');
       const data = await response.json();
       this.issue = data;
       if (data.members.length) {
