@@ -110,6 +110,8 @@ class IssueController extends Controller
         }
         $this->db->redis->hmset($id, ['status' => 'voting', 'members' => json_encode($members)]);
 
+        $this->pusher->trigger('workana-channel', 'reload-issue', []);
+
         return $this->response(['message' => $member['name'] . ' joined the issue #' . $id . ' successfully'], $resp);
     }
 
@@ -177,6 +179,8 @@ class IssueController extends Controller
         }
         $this->db->redis->hmset($id, ['status' => $status, 'members' => json_encode($members)]);
 
+        $this->pusher->trigger('workana-channel', 'reload-issue', []);
+
         return $this->response(['message' => 'The user with name ' . $params['name'] . ' ' . $member['status']], $resp);
     }
 
@@ -201,6 +205,9 @@ class IssueController extends Controller
         } else {
             $message = $params['name'] . ' didn\'t leaved because the user never joined the issue #' . $id;
         }
+        
+        $this->pusher->trigger('workana-channel', 'reload-issue', []);
+
         return $this->response(['message' => $message], $resp);
     }
 

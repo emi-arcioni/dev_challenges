@@ -45,11 +45,14 @@
 
 <script>
 import router from '../router';
+import Pusher from 'pusher-js';
 
 export default {
   name: 'Voting',
   data() {
     return {
+      pusher: null,
+      channel: null,
       issue_id: null,
       issue: null,
       member_name: null,
@@ -63,11 +66,26 @@ export default {
   created() {
     this.issue_id = this.$route.params.id;
     this.member_name = this.$route.params.name;
+    this.subscribe();
   },
   async mounted() {
     this.getIssue();
   },
+  beforeRouteLeave (to, from, next) {
+    this.pusher.unsubscribe('workana-channel');
+    next();
+  },
   methods: {
+    subscribe() {
+      this.pusher = new Pusher(process.env.VUE_APP_PUSHER, {
+        cluster: 'mt1'
+      });
+
+      this.channel = this.pusher.subscribe('workana-channel');
+      this.channel.bind('reload-issue', () => {
+        this.getIssue();
+      });
+    },
     async emitVote(vote) {
       if (this.issue.status == 'reveal') return;
       const requestOptions = {
@@ -82,6 +100,7 @@ export default {
       this.getIssue();
     },
     async getIssue() {
+      console.log("getIssue");
       const response = await fetch(process.env.VUE_APP_API_URL + '/issues/' + this.issue_id);
       if (response.status == 404) router.push('/');
       const data = await response.json();
