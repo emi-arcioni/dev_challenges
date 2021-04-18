@@ -40,8 +40,7 @@ class IssuesTest extends TestCase
         
         $body = json_decode((string)$response->getBody(), true);
         
-        $this->assertEquals(400, $response->getStatusCode());
-        $this->assertEquals('Emilio already joined the issue #1', $body['error']['description']);
+        $this->assertEquals('Emilio already joined the issue #1', $body['message']);
     }
     
     public function testUserCanVote()
