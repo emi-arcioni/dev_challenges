@@ -187,6 +187,8 @@ class IssueController extends Controller
 
     private function average($arr)
     {
+        if (!count($arr)) return 0;
+        
         return array_sum($arr) / count($arr);
     }
 }
