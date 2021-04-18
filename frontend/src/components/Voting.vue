@@ -16,7 +16,7 @@
           <h3>
             Joined users: {{members.length}}
           </h3>
-          <ul class="list-group">
+          <ul class="list-group mb-3">
             <li class="list-group-item" :key="member.name" v-for="member in members">
               {{member.name}} {{ member.name == member_name ? '(you)':  '' }}
               {{member.status == 'voted' || member.status == 'passed' ? ' ✅' : ''}}
@@ -27,14 +27,18 @@
               Average: {{ issue.avg }}
             </li>
           </ul>
+          <button 
+            class="btn btn-secondary" 
+            v-if="issue && issue.status == 'voting'"
+            @click="leaveIssue()">Leave issue</button>
         </div>
       </div>
     </div>
 
-<pre style="text-align: left;">
-  <strong>PHP res:</strong>
-  {{responsesDemo.php}}
-</pre>
+    <pre style="text-align: left;">
+      <strong>PHP res:</strong>
+      {{responsesDemo.php}}
+    </pre>
 
   </div>
 </template>
@@ -43,7 +47,7 @@
 import router from '../router';
 
 export default {
-  name: 'Lobby',
+  name: 'Voting',
   data() {
     return {
       issue_id: null,
@@ -90,6 +94,17 @@ export default {
       });
       if (!m.length) router.push('/');
       this.responsesDemo.php = JSON.stringify(data);
+    },
+    async leaveIssue() {
+      const requestOptions = {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            name: this.member_name
+          })
+      };
+      await fetch(process.env.VUE_APP_API_URL + '/issues/' + this.issue_id + '/leave', requestOptions);
+      router.push('/');
     }
   }
 }
