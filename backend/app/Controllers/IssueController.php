@@ -106,7 +106,7 @@ class IssueController extends Controller
         if (!$member_exists) {
             $members[] = $member;
         } else {
-            throw new HttpBadRequestException($request, $member['name'] . ' already joined the issue #' . $id);
+            return $this->response(['message' => $member['name'] . ' already joined the issue #' . $id]);
         }
         $this->db->redis->hmset($id, ['status' => 'voting', 'members' => json_encode($members)]);
 
