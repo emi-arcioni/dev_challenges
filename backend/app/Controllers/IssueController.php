@@ -180,6 +180,30 @@ class IssueController extends Controller
         return $this->response(['message' => 'The user with name ' . $params['name'] . ' ' . $member['status']], $resp);
     }
 
+    public function leave(Request $request, Response $resp, array $args)
+    {
+        $id = $args['id'];
+        $params = $request->getParsedBody();
+
+        if (empty($params['name'])) {
+            throw new HttpBadRequestException($request, 'The name field is mandatory');
+        }
+
+        $data = $this->db->redis->hgetall($id);
+        $members = json_decode($data['members'], true);
+        $new_members = array_filter($members, function($member) use ($params) {
+            return $params['name'] != $member['name'];
+        });
+        $this->db->redis->hmset($id, ['status' => $data['status'], 'members' => json_encode($new_members)]);
+
+        if ($members != $new_members) {
+            $message = $params['name'] . ' leaved the issue #' . $id . ' successfully';
+        } else {
+            $message = $params['name'] . ' didn\'t leaved because the user never joined the issue #' . $id;
+        }
+        return $this->response(['message' => $message], $resp);
+    }
+
     private function issueExist($issue_id)
     {
         return $this->db->redis->exists($issue_id);
