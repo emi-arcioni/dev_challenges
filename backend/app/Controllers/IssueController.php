@@ -70,9 +70,7 @@ class IssueController extends Controller
 
     public function join(Request $request, Response $resp, array $args)
     {
-        /** 
-        * TODO: Feel free to use a session or token to keep identified the user in subsequent requests.
-        */
+        session_start();
 
         $id = $args['id'];
         $params = $request->getParsedBody();
@@ -83,6 +81,7 @@ class IssueController extends Controller
         }
 
         $member = [
+            'id' => session_id(),
             'name' => $params['name'],
             'status' => 'waiting',
             'value' => null
@@ -97,7 +96,7 @@ class IssueController extends Controller
             $members = json_decode($data['members'], true);
 
             foreach($members as $existing_member) {
-                if ($existing_member['name'] == $member['name']) {
+                if ($existing_member['id'] == $member['id']) {
                     $member_exists = true;
                 }
             }
@@ -117,12 +116,11 @@ class IssueController extends Controller
 
     public function vote(Request $request, Response $resp, array $args)
     {
+        session_start();
+
         $id = $args['id'];
         $params = $request->getParsedBody();
 
-        if (empty($params['name'])) {
-            throw new HttpBadRequestException($request, 'The name field is mandatory');
-        }
         if (empty($params['value'])) {
             throw new HttpBadRequestException($request, 'The value field is mandatory');
         }
@@ -143,22 +141,22 @@ class IssueController extends Controller
         $member_exists = false;
         $members = json_decode($data['members'], true);
         
-        foreach($members as $index => $member) {
-            if ($member['name'] == $params['name']) {
-                $member_exists = true;
-                $member_status = $member['status'];
+        $member = NULL;
+        foreach($members as $index => $m) {
+            if ($m['id'] == session_id()) {
+                $member = $m;
                 break;
             }
         }
 
         // Reject votes if user not joined {:issue}.
-        if (!$member_exists) {
-            throw new HttpBadRequestException($request, 'The user with name ' . $params['name'] . ' didn\'t joined this issue');
+        if (empty($member)) {
+            throw new HttpBadRequestException($request, 'Please join this issue in order to vote');
         }
 
         // Reject votes if user already voted or passed. 
-        if ($member_status == 'voted' || $member_status == 'passed') {
-            throw new HttpBadRequestException($request, 'The user with name ' . $params['name'] . ' already voted or passed this issue');
+        if ($member['status'] == 'voted' || $member['status'] == 'passed') {
+            throw new HttpBadRequestException($request, 'The user with name ' . $member['name'] . ' already voted or passed this issue');
         }
 
         if (is_numeric($params['value'])) {
@@ -181,29 +179,26 @@ class IssueController extends Controller
 
         $this->pusher->trigger('workana-channel', 'reload-issue', []);
 
-        return $this->response(['message' => 'The user with name ' . $params['name'] . ' ' . $member['status']], $resp);
+        return $this->response(['message' => 'The user with name ' . $member['name'] . ' ' . $member['status']], $resp);
     }
 
     public function leave(Request $request, Response $resp, array $args)
     {
+        session_start();
+        
         $id = $args['id'];
-        $params = $request->getParsedBody();
-
-        if (empty($params['name'])) {
-            throw new HttpBadRequestException($request, 'The name field is mandatory');
-        }
-
+        
         $data = $this->db->redis->hgetall($id);
         $members = json_decode($data['members'], true);
-        $new_members = array_filter($members, function($member) use ($params) {
-            return $params['name'] != $member['name'];
+        $new_members = array_filter($members, function($member) {
+            return $member['id'] != session_id();
         });
         $this->db->redis->hmset($id, ['status' => $data['status'], 'members' => json_encode($new_members)]);
 
         if ($members != $new_members) {
-            $message = $params['name'] . ' leaved the issue #' . $id . ' successfully';
+            $message = 'You leaved the issue #' . $id . ' successfully';
         } else {
-            $message = $params['name'] . ' didn\'t leaved because the user never joined the issue #' . $id;
+            $message = 'You didn\'t leave because you never joined the issue #' . $id;
         }
         
         $this->pusher->trigger('workana-channel', 'reload-issue', []);
