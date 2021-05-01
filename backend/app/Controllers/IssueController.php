@@ -70,8 +70,6 @@ class IssueController extends Controller
 
     public function join(Request $request, Response $resp, array $args)
     {
-        session_start();
-
         $id = $args['id'];
         $params = $request->getParsedBody();
 
@@ -116,8 +114,6 @@ class IssueController extends Controller
 
     public function vote(Request $request, Response $resp, array $args)
     {
-        session_start();
-
         $id = $args['id'];
         $params = $request->getParsedBody();
 
@@ -183,9 +179,7 @@ class IssueController extends Controller
     }
 
     public function leave(Request $request, Response $resp, array $args)
-    {
-        session_start();
-        
+    {        
         $id = $args['id'];
         
         $data = $this->db->redis->hgetall($id);

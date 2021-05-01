@@ -4,6 +4,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface;
 use Slim\Routing\RouteContext;
+use App\Middleware\SessionMiddleware;
 
 return function (App $app) {
     $app->options('/{routes:.+}', function ($request, $response, $args) {
@@ -19,4 +20,5 @@ return function (App $app) {
     });
     $app->addBodyParsingMiddleware();
     $app->addRoutingMiddleware();
+    $app->add(SessionMiddleware::class);
 };
