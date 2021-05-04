@@ -71,9 +71,12 @@ class HttpErrorHandler extends ErrorHandler
         
         $response = $this->responseFactory->createResponse($statusCode);      
         
-        // workaround for the use case when there's a request to an unknown endpoint and want the client don't get the CORS error
-        $response = $response->withHeader('Access-Control-Allow-Origin', '*');
-        
+        $response = $response
+        ->withHeader('Access-Control-Allow-Origin', $_ENV['ACCESS_CONTROL_ALLOW_ORIGIN'])
+        ->withHeader('Access-Control-Allow-Credentials', 'true')
+        ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+        ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+
         $response->getBody()->write($payload);
         
         return $response->withHeader('Content-Type', 'application/json');
