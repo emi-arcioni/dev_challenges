@@ -23,8 +23,9 @@
                 </div>
                 <div class="form-group" v-if="issue_id == 'new'">
                     <input type="number" class="form-control" name="new_issue" v-model="new_issue">
+                    <small class="form-text text-muted">Please enter the issue ID</small>
                 </div>
-                <button type="submit" class="btn btn-primary">Confirm</button>
+                <button type="submit" class="btn btn-primary">{{ issue_id == 'new' ? 'Create & Join' : 'Join' }}</button>
             </form>
         </div>
     </div>
