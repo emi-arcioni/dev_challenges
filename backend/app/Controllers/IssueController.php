@@ -173,9 +173,13 @@ class IssueController extends Controller
         }
         $this->db->redis->hmset($id, ['status' => $status, 'members' => json_encode($members)]);
 
-        $this->pusher->trigger('workana-channel', 'reload-issue', []);
+        $message = 'The user with name ' . $member['name'] . ' ' . $member['status'];
 
-        return $this->response(['message' => 'The user with name ' . $member['name'] . ' ' . $member['status']], $resp);
+        $this->pusher->trigger('workana-channel', 'reload-issue', [
+            'message' => $message
+        ]);
+
+        return $this->response(['message' => $message], $resp);
     }
 
     public function leave(Request $request, Response $resp, array $args)
@@ -184,18 +188,30 @@ class IssueController extends Controller
         
         $data = $this->db->redis->hgetall($id);
         $members = json_decode($data['members'], true);
-        $new_members = array_filter($members, function($member) {
-            return $member['id'] != session_id();
-        });
+        // $new_members = array_filter($members, function($member) {
+        //     return $member['id'] != session_id();
+        // });
+        $new_members = [];
+        $member = NULL;
+        array_map(function($m) use (&$member, &$new_members) {
+            if ($m['id'] == session_id()) {
+                $member = $m;
+            } else {
+                $new_members[] = $m;
+            }
+        }, $members);
+
         $this->db->redis->hmset($id, ['status' => $data['status'], 'members' => json_encode($new_members)]);
 
         if ($members != $new_members) {
             $message = 'You leaved the issue #' . $id . ' successfully';
+
+            $this->pusher->trigger('workana-channel', 'reload-issue', [
+                'message' => 'The user with name ' . $member['name'] . ' leaved the issue #' . $id
+            ]);
         } else {
             $message = 'You didn\'t leave because you never joined the issue #' . $id;
         }
-        
-        $this->pusher->trigger('workana-channel', 'reload-issue', []);
 
         return $this->response(['message' => $message], $resp);
     }
