@@ -107,7 +107,9 @@ class IssueController extends Controller
         }
         $this->db->redis->hmset($id, ['status' => 'voting', 'members' => json_encode($members)]);
 
-        $this->pusher->trigger('workana-channel', 'reload-issue', []);
+        $this->pusher->trigger('workana-channel', 'reload-issue', [
+            'message' => $member['name'] . ' joined the issue #' . $id
+        ]);
 
         return $this->response(['message' => $member['name'] . ' joined the issue #' . $id . ' successfully'], $resp);
     }
@@ -173,7 +175,7 @@ class IssueController extends Controller
         }
         $this->db->redis->hmset($id, ['status' => $status, 'members' => json_encode($members)]);
 
-        $message = 'The user with name ' . $member['name'] . ' ' . $member['status'];
+        $message = $member['name'] . ' ' . $member['status'];
 
         $this->pusher->trigger('workana-channel', 'reload-issue', [
             'message' => $message
@@ -207,7 +209,7 @@ class IssueController extends Controller
             $message = 'You leaved the issue #' . $id . ' successfully';
 
             $this->pusher->trigger('workana-channel', 'reload-issue', [
-                'message' => 'The user with name ' . $member['name'] . ' leaved the issue #' . $id
+                'message' => $member['name'] . ' leaved the issue #' . $id
             ]);
         } else {
             $message = 'You didn\'t leave because you never joined the issue #' . $id;
