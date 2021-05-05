@@ -33,12 +33,15 @@
 
 <script>
 import router from '../router';
+import Pusher from 'pusher-js';
 import axios from "axios";
 
 export default {
     name: 'Home',
     data() {
         return {
+            pusher: null,
+            channel: null,
             issues: [],
             errors: [],
             name: null,
@@ -47,6 +50,14 @@ export default {
         }
     },
     async mounted() {
+        this.pusher = new Pusher(process.env.VUE_APP_PUSHER, {
+            cluster: 'mt1'
+        });
+
+        this.channel = this.pusher.subscribe('workana-channel');
+        this.channel.bind('reload-issue', () => {
+            this.getIssues();
+        });
         this.getIssues();
     },
     methods: {
