@@ -17,7 +17,8 @@
     "pusher-js": "^7.0.3",
     "vue": "^2.6.11",
     "vue-router": "^2.8.1",
-    "vue-toasted": "^1.1.28"
+    "vue-toasted": "^1.1.28",
+    "vuelidate": "^0.7.6"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",

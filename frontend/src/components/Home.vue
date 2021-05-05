@@ -7,23 +7,27 @@
                     <li v-for="error in errors" :key="error">{{ error }}</li>
                 </ul>
             </div>
-            <form id="app" @submit="checkForm">
+            <form id="app" @submit="checkForm" :class="{ 'was-validated': formSubmitted && $v.$invalid }" novalidate>
                 <div class="form-group">
                     <label for="input1">Your name</label>
-                    <input type="text" class="form-control" id="input1" name="name" v-model="name">
+                    <input type="text" class="form-control" id="input1" name="name" v-model="name" required>
                     <small class="form-text text-muted">Please enter your name in order to identify yourself in the planning poker</small>
+                    <div class="invalid-feedback" v-if="!$v.name.required">Name is required</div>
+
                 </div>
                 <div class="form-group">
                     <label for="input2">Select an issue</label>
-                    <select name="issue_id" id="input2" class="form-control" v-model="issue_id">
+                    <select name="issue_id" id="input2" class="form-control" v-model="issue_id" required>
                         <option v-bind:value="null">Select...</option>
                         <option v-bind:value="'new'">New</option>
                         <option v-for="issue in issues" :key="issue.id" v-bind:value="issue.id">{{ issue.id }}</option>
                     </select>
+                    <div class="invalid-feedback" v-if="!$v.issue_id.required">Issue is required</div>
                 </div>
                 <div class="form-group" v-if="issue_id == 'new'">
-                    <input type="number" class="form-control" name="new_issue" v-model="new_issue">
+                    <input type="number" class="form-control" name="new_issue" v-model="new_issue" required>
                     <small class="form-text text-muted">Please enter the issue ID</small>
+                    <div class="invalid-feedback" v-if="!$v.new_issue.required">The issue ID is required</div>
                 </div>
                 <button type="submit" class="btn btn-primary">{{ issue_id == 'new' ? 'Create & Join' : 'Join' }}</button>
             </form>
@@ -35,6 +39,7 @@
 import router from '../router';
 import Pusher from 'pusher-js';
 import axios from "axios";
+import { required, requiredIf } from 'vuelidate/lib/validators';
 
 export default {
     name: 'Home',
@@ -46,7 +51,21 @@ export default {
             errors: [],
             name: null,
             issue_id: null,
-            new_issue: null
+            new_issue: null,
+            formSubmitted: false
+        }
+    },
+    validations: {
+        name: {
+            required
+        },
+        issue_id: {
+            required
+        },
+        new_issue: {
+            required: requiredIf(function (form) {
+                return form.issue_id == 'new'
+            })
         }
     },
     async mounted() {
@@ -69,38 +88,30 @@ export default {
         },
         async checkForm(e) {
             e.preventDefault();
-            this.errors = [];
-            if (!this.name) {
-                this.errors.push('Your name is mandatory');
-            }
-            if (!this.issue_id) {
-                this.errors.push('The issue is mandatory');
-            } else if (this.issue_id == 'new' && !this.new_issue) {
-                this.errors.push('The new issue is mandatory');
-            }
+            this.formSubmitted = true;
 
-            if (!this.errors.length) { 
-                let issue_id;
-                if (this.issue_id == 'new') {
-                    issue_id = this.new_issue;
+            if (this.$v.$invalid) return;
+            this.errors = [];
+            let issue_id;
+            if (this.issue_id == 'new') {
+                issue_id = this.new_issue;
+            } else {
+                issue_id = this.issue_id;
+            }               
+            const payload = {
+                name: this.name,
+            };
+            try {
+                this.$emit('isLoading');
+                const response = await axios.post(process.env.VUE_APP_API_URL + '/issues/' + issue_id + '/join', payload, { withCredentials: true });
+                if (response.status == 200) {
+                    router.push('voting/' + issue_id + '/' + this.name);
                 } else {
-                    issue_id = this.issue_id;
-                }               
-                const payload = {
-                    name: this.name,
-                };
-                try {
-                    this.$emit('isLoading');
-                    const response = await axios.post(process.env.VUE_APP_API_URL + '/issues/' + issue_id + '/join', payload, { withCredentials: true });
-                    if (response.status == 200) {
-                        router.push('voting/' + issue_id + '/' + this.name);
-                    } else {
-                        this.$emit('finishedLoading');
-                    }
-                } catch (e) {
                     this.$emit('finishedLoading');
-                    this.errors.push(e.response.data.error.description);
                 }
+            } catch (e) {
+                this.$emit('finishedLoading');
+                this.errors.push(e.response.data.error.description);
             }
         }
     }
