@@ -35,17 +35,13 @@
       </div>
     </div>
 
-    <pre style="text-align: left;">
-      <strong>PHP res:</strong>
-      {{responsesDemo.php}}
-    </pre>
-
   </div>
 </template>
 
 <script>
 import router from '../router';
 import Pusher from 'pusher-js';
+import axios from "axios";
 
 export default {
   name: 'Voting',
@@ -82,47 +78,47 @@ export default {
       });
 
       this.channel = this.pusher.subscribe('workana-channel');
-      this.channel.bind('reload-issue', () => {
+      this.channel.bind('reload-issue', (data) => {
         this.getIssue();
+        if (data.message) {
+          this.$emit('toast', data.message);
+        }
       });
     },
     async emitVote(vote) {
       if (this.issue.status == 'reveal') return;
-      const requestOptions = {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            name: this.member_name,
-            value: vote
-          })
+      this.$emit('isLoading');
+      const payload = {
+        value: vote,
       };
-      await fetch(process.env.VUE_APP_API_URL + '/issues/' + this.issue_id + '/vote', requestOptions);
-      this.getIssue();
+      await axios.post(process.env.VUE_APP_API_URL + '/issues/' + this.issue_id + '/vote', payload, {
+          withCredentials: true
+      });
     },
     async getIssue() {
-      console.log("getIssue");
-      const response = await fetch(process.env.VUE_APP_API_URL + '/issues/' + this.issue_id);
+      const response = await axios.get(process.env.VUE_APP_API_URL + '/issues/' + this.issue_id, {
+          withCredentials: true
+      });
       if (response.status == 404) router.push('/');
-      const data = await response.json();
-      this.issue = data;
-      if (data.members.length) {
-        this.members = data.members;
+      this.$emit('finishedLoading');
+      if (this.issue && response.data.status == 'reveal') {
+        this.$emit('toast', 'All users voted');
+      }
+      this.issue = response.data;
+      if (response.data.members.length) {
+        this.members = response.data.members;
       }
       const m = this.members.filter(member => {
         return member.name == this.member_name
       });
       if (!m.length) router.push('/');
-      this.responsesDemo.php = JSON.stringify(data);
     },
     async leaveIssue() {
-      const requestOptions = {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            name: this.member_name
-          })
-      };
-      await fetch(process.env.VUE_APP_API_URL + '/issues/' + this.issue_id + '/leave', requestOptions);
+      this.$emit('isLoading');
+      const payload = {};
+      await axios.post(process.env.VUE_APP_API_URL + '/issues/' + this.issue_id + '/leave', payload, {
+          withCredentials: true
+      });
       router.push('/');
     }
   }

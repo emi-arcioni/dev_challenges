@@ -32,6 +32,7 @@
 
 <script>
 import router from '../router';
+import axios from "axios";
 
 export default {
     name: 'Home',
@@ -49,9 +50,10 @@ export default {
     },
     methods: {
         async getIssues() {
-            const resPhp = await fetch(process.env.VUE_APP_API_URL + '/issues');
-            const data = await resPhp.json();
-            this.issues = data;
+            this.$emit('isLoading');
+            const response = await axios.get(process.env.VUE_APP_API_URL + '/issues', { withCredentials: true });
+            this.issues = response.data;
+            this.$emit('finishedLoading');
         },
         async checkForm(e) {
             e.preventDefault();
@@ -72,17 +74,20 @@ export default {
                 } else {
                     issue_id = this.issue_id;
                 }               
-                const requestOptions = {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name: this.name })
+                const payload = {
+                    name: this.name,
                 };
-                const resp = await fetch(process.env.VUE_APP_API_URL + '/issues/' + issue_id + '/join', requestOptions);
-                if (resp.status == 200) {
-                    router.push('voting/' + issue_id + '/' + this.name);
-                } else {
-                    const data = await resp.json();
-                    this.errors.push(data.error.description);
+                try {
+                    this.$emit('isLoading');
+                    const response = await axios.post(process.env.VUE_APP_API_URL + '/issues/' + issue_id + '/join', payload, { withCredentials: true });
+                    if (response.status == 200) {
+                        router.push('voting/' + issue_id + '/' + this.name);
+                    } else {
+                        this.$emit('finishedLoading');
+                    }
+                } catch (e) {
+                    this.$emit('finishedLoading');
+                    this.errors.push(e.response.data.error.description);
                 }
             }
         }

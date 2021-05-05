@@ -12,7 +12,16 @@
           <h2 class="mb-0">Hiring Challenge 👋</h2>
         </div>
       </div>
-      <router-view></router-view>
+      <router-view 
+        @isLoading="isLoading()"
+        @finishedLoading="finishedLoading()"
+        @toast="toast($event)"
+        ></router-view>
+    </div>
+    <div class="spinner-container" v-if="showSpinner">
+      <div class="spinner-border" role="status">
+        <span class="sr-only">Loading...</span>
+      </div>
     </div>
   </div>
 </template>
@@ -22,7 +31,28 @@ import router from './router';
 
 export default {
   name: 'App',
+  data() {
+    return {
+      showSpinner: false
+    }
+  },
   methods: {
+    isLoading() {
+      this.showSpinner = true;
+    },
+    finishedLoading() {
+      this.showSpinner = false;
+    },
+    toast(message) {
+      this.$toasted.show(message, {
+        action : {
+            text : 'Close',
+            onClick : (e, toastObject) => {
+                toastObject.goAway(0);
+            }
+        },
+      });
+    },
     gotoHome() {
       router.push('/');
     }
@@ -108,5 +138,16 @@ h3 {
   color: #2a9d8f;
   width: 75px;
   text-align: center;
+}
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background-color: rgba(255,255,255,0.8);
 }
 </style>
