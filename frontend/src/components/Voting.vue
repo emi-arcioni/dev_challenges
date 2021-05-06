@@ -8,7 +8,7 @@
           <ul id="voteList">
             <li v-for="vote in validVotes"
                 :key="vote"
-                :class="{voted: issue && issue.status == 'reveal'}"
+                :class="{voted: member && (member.status == 'voted' || member.status == 'passed')}"
                 @click="emitVote(vote)">{{vote}}</li>
           </ul>
         </div>
@@ -85,7 +85,7 @@ export default {
       });
     },
     async emitVote(vote) {
-      if (this.issue.status == 'reveal') return;
+      if (this.member.status == 'voted' || this.member.status == 'passed') return;
       this.$emit('isLoading');
       const payload = {
         value: vote,
