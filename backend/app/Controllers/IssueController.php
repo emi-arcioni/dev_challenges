@@ -35,6 +35,7 @@ class IssueController extends Controller
                 // Because during voting status the votes are secret you must hide each vote until all members voted.
                 $members = array_map(function($member) {
                     return [
+                        'id' => $member['id'],
                         'name' => $member['name'],
                         'status' => $member['status']
                     ];
