@@ -166,14 +166,7 @@ class IssueController extends Controller
         }
 
         $members[$index] = $member;
-        $waiting = array_filter($members, function($member) {
-            return $member['status'] == 'waiting';
-        });
-        if (count($waiting) == 0) {
-            $status = 'reveal';
-        } else {
-            $status = 'voting';
-        }
+        $status = $this->calcStatus($members);
         $this->db->redis->hmset($id, ['status' => $status, 'members' => json_encode($members)]);
 
         $message = $member['name'] . ' ' . $member['status'];
@@ -204,7 +197,9 @@ class IssueController extends Controller
             }
         }, $members);
 
-        $this->db->redis->hmset($id, ['status' => $data['status'], 'members' => json_encode($new_members)]);
+        $status = $this->calcStatus($new_members);
+
+        $this->db->redis->hmset($id, ['status' => $status, 'members' => json_encode($new_members)]);
 
         if ($members != $new_members) {
             $message = 'You leaved the issue #' . $id . ' successfully';
@@ -229,5 +224,19 @@ class IssueController extends Controller
         if (!count($arr)) return 0;
         
         return array_sum($arr) / count($arr);
+    }
+
+    private function calcStatus($members) 
+    {
+        $waiting = array_filter($members, function($member) {
+            return $member['status'] == 'waiting';
+        });
+        if (count($waiting) == 0) {
+            $status = 'reveal';
+        } else {
+            $status = 'voting';
+        }
+
+        return $status;
     }
 }
