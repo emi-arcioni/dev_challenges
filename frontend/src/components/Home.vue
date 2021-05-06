@@ -82,8 +82,12 @@ export default {
     methods: {
         async getIssues() {
             this.$emit('isLoading');
-            const response = await axios.get(process.env.VUE_APP_API_URL + '/issues', { withCredentials: true });
-            this.issues = response.data;
+            try {
+                const response = await axios.get(process.env.VUE_APP_API_URL + '/issues', { withCredentials: true });
+                this.issues = response.data;
+            } catch (e) {
+                this.errors.push(e.response.data.error.description);
+            }
             this.$emit('finishedLoading');
         },
         async checkForm(e) {
