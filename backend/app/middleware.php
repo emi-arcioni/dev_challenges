@@ -17,7 +17,9 @@ return function (App $app) {
                 ->withHeader('Access-Control-Allow-Origin', $_ENV['ACCESS_CONTROL_ALLOW_ORIGIN'])
                 ->withHeader('Access-Control-Allow-Credentials', 'true')
                 ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
-                ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+                ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
+                ->withHeader('Access-Control-Expose-Headers', 'uid')
+                ->withHeader('uid', session_id());
     });
     $app->addBodyParsingMiddleware();
     $app->addRoutingMiddleware();
