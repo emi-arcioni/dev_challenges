@@ -13,7 +13,7 @@ const routes = [
       component: Home
     },
     {
-      path: "/voting/:id/:name",
+      path: "/voting/:id",
       name: "voting",
       component: Voting
     }

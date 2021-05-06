@@ -109,7 +109,7 @@ export default {
                 this.$emit('isLoading');
                 const response = await axios.post(process.env.VUE_APP_API_URL + '/issues/' + issue_id + '/join', payload, { withCredentials: true });
                 if (response.status == 200) {
-                    router.push('voting/' + issue_id + '/' + this.name);
+                    router.push('voting/' + issue_id);
                 } else {
                     this.$emit('finishedLoading');
                 }

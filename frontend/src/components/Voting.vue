@@ -17,11 +17,11 @@
             Joined users: {{members.length}}
           </h3>
           <ul class="list-group mb-3">
-            <li class="list-group-item" :key="member.name" v-for="member in members">
-              {{member.name}} {{ member.name == member_name ? '(you)':  '' }}
-              status: {{member.status}}
-              {{member.status == 'voted' || member.status == 'passed' ? ' ✅' : ''}}
-              {{member.value ? ' - ' + member.value : ''}}
+            <li class="list-group-item" :key="m.id" v-for="m in members">
+              {{m.name}} {{ member && m.id == member.id ? '(you)':  '' }}
+              status: {{m.status}}
+              {{m.status == 'voted' || m.status == 'passed' ? ' ✅' : ''}}
+              {{m.value ? ' - ' + m.value : ''}}
             </li>
             <li v-if="issue && issue.status == 'reveal'" class="list-group-item active">
               Average: {{ issue.avg }}
@@ -51,7 +51,7 @@ export default {
       channel: null,
       issue_id: null,
       issue: null,
-      member_name: null,
+      member: null,
       validVotes: [1,2,3,5,8,13,20,40,'?'],
       members: [],
       responsesDemo: {
@@ -61,7 +61,6 @@ export default {
   },
   created() {
     this.issue_id = this.$route.params.id;
-    this.member_name = this.$route.params.name;
     this.subscribe();
   },
   async mounted() {
@@ -108,10 +107,12 @@ export default {
       if (response.data.members.length) {
         this.members = response.data.members;
       }
+      const uid = response.headers.uid;
       const m = this.members.filter(member => {
-        return member.name == this.member_name
+        return member.id == uid
       });
       if (!m.length) router.push('/');
+      this.member = m[0];
     },
     async leaveIssue() {
       this.$emit('isLoading');
